@@ -131,9 +131,11 @@ if __name__ == "__main__":
                 if distance in distances[newscanner]: 
                     distance_matches.append([distances[scanner][distance], distances[newscanner][distance]])
                     count += 1
-                    if count >= req_matches: break
-            if count >= req_matches:  #So apparently there needs to be 12 points that match (I don't think so) but it makes searching easier
-                print(f'Scanner {scanner} matches with {newscanner}')
+                    #if count >= req_matches: break
+                    if count >= 3: break
+            #if count >= req_matches:  #So apparently there needs to be 12 points that match (I don't think so) but it makes searching easier
+            if count>= 3:
+                #print(f'Scanner {scanner} matches with {newscanner}')
                 scanners_to_map.append(newscanner)
                 
                 orig_dist1 = distance_matches[0][0] #This is the orig match, first distance
@@ -203,7 +205,7 @@ if __name__ == "__main__":
                     for j in positions[newscanner]:
                         if all(i == j):
                             newcount += 1 
-                if (newcount < 12): pdb.set_trace()
+                #if (newcount < 12): pdb.set_trace()
     #At this point everything should be mapped... now I just need to find the unique points.
     final_positions = positions[0]
     for scanner in positions:
@@ -218,7 +220,6 @@ if __name__ == "__main__":
     #P2 - I need to find where the scanners actually are...
     #If I add a point for each scanner at 0,0,0 and do the rotations (see scanner_positions), it should work itself out?
     max = 0
-    pdb.set_trace()
     scanner_positions[0] = [0,0,0]
     for i in range(len(scanner_positions)):
         for j in range(i+1,len(scanner_positions)):

@@ -42,9 +42,7 @@ def loadFile(file):
             scanner = int(line.split(' ')[2])
             next
         elif ',' in line: #This is hacky...
-            #tmparr = [int(x) for x in line.split(',')]
             tmparr = numpy.array([int(x) for x in line.split(',')])
-            #tmparr.append(sqrt(sum([x**2 for x in tmparr])))
             output[scanner] = [*output[scanner],tmparr] if scanner in output else [tmparr]
     return output
 
@@ -56,6 +54,10 @@ def get_distances(arr: list) -> list:
             if dist in output: output[dist].append([arr[i],arr[j]])
             else: output[dist] = [arr[i],arr[j]]
     return output
+
+def manhattan_distance(p1,p2):
+    tmp=p1-p2
+    return abs(tmp[0])+abs(tmp[1])+abs(tmp[2])
 
 def dot(ar1,ar2):
     return [sum(ar1*ar2[0]),sum(ar1*ar2[1]),sum(ar1*ar2[2])]
@@ -111,6 +113,7 @@ if __name__ == "__main__":
     scanners_mapped = []
     scanners_to_map = [0]
     total_scanners = 1 #I always match with the starting value!
+    scanner_positions = {}
     while len(scanners_to_map):
         #Handle which scanner to read
         #pdb.set_trace()
@@ -128,11 +131,11 @@ if __name__ == "__main__":
                 if distance in distances[newscanner]: 
                     distance_matches.append([distances[scanner][distance], distances[newscanner][distance]])
                     count += 1
-                    if count >= 3: break
-            if count >= 3:  #So apparently there needs to be 12 points that match (I don't think so) but it makes searching easier
-                #TODO need to do more here
+                    if count >= req_matches: break
+            if count >= req_matches:  #So apparently there needs to be 12 points that match (I don't think so) but it makes searching easier
+                print(f'Scanner {scanner} matches with {newscanner}')
+                scanners_to_map.append(newscanner)
                 
-                pdb.set_trace()
                 orig_dist1 = distance_matches[0][0] #This is the orig match, first distance
                 orig_dist2 = distance_matches[1][0]
                 new_dist1 = distance_matches[0][1]
@@ -164,8 +167,6 @@ if __name__ == "__main__":
                     pdb.set_trace()
                     print('Note to me - my assumption here wasn\'t good!')
 
-                movement_necessary = base_point - matching_point
-
                 #Move it
                 orig_opp = None
                 if all(orig_dist1[0] == base_point):
@@ -181,21 +182,50 @@ if __name__ == "__main__":
                 new_opp = new_opp - matching_point
 
                 rotation = test_rotation(new_opp,orig_opp)
+
+                #So now for all points... first, move them by the matching point
+                for i in range(len(positions[newscanner])):
+                    positions[newscanner][i] = positions[newscanner][i] - matching_point
                 #Fix rotations
                 for i in range(len(positions[newscanner])):
                     positions[newscanner][i] = dot(positions[newscanner][i],rotations[rotation])
                 #Fix movement
                 for i in range(len(positions[newscanner])):
-                    positions[newscanner][i] = positions[newscanner][i] + movement_necessary
+                    positions[newscanner][i] = positions[newscanner][i] + base_point
 
-                #TEST
+                #Deal with scanner? for P2
+                scanner_positions[newscanner] = dot(-matching_point,rotations[rotation])+base_point
+
+                distances[newscanner] = get_distances(positions[newscanner])
+
                 newcount = 0
-                for i in positions[0]:
+                for i in positions[scanner]:
                     for j in positions[newscanner]:
                         if all(i == j):
                             newcount += 1 
-                print(f'newcount is {newcount}')
+                if (newcount < 12): pdb.set_trace()
+    #At this point everything should be mapped... now I just need to find the unique points.
+    final_positions = positions[0]
+    for scanner in positions:
+        if scanner == 0: continue
+        for point in positions[scanner]:
+            if any([all(point == position) for position in final_positions]):
+                pass
+            else:
+                final_positions.append(point)
+    print(f'P1: {len(final_positions)}')
 
-                
-    if args.p1: p1(args.file)
-    if args.p2: p2(args.file)
+    #P2 - I need to find where the scanners actually are...
+    #If I add a point for each scanner at 0,0,0 and do the rotations (see scanner_positions), it should work itself out?
+    max = 0
+    pdb.set_trace()
+    scanner_positions[0] = [0,0,0]
+    for i in range(len(scanner_positions)):
+        for j in range(i+1,len(scanner_positions)):
+            try:
+                dist = manhattan_distance(scanner_positions[i], scanner_positions[j])
+                if dist > max: max = dist
+            except:
+                pass
+
+    print(f'P2: {max}')

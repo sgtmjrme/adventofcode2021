@@ -38,23 +38,29 @@ def loop(p1_start,p2_start,boardsize,dicemax):
         if p2sum >= 1000:
             return p1sum, dierolls
 
-possible_rolls = [3,4,5,6,7,8,9] #This is all the rolls that can exist
-wins_for_roll = [27,26,23,17,10,4,1]
-scores = [0,0]
-def p2_recurse(is_player: bool, player_score: int, opponent_score: int, player_place: int, opponent_place: int):
-    for roll in possible_rolls:
-        place = player_new_pos(player_place, 10, roll)
-        player_score += place
-        if player_score >= 1000:
-            scores[is_player] += wins_for_roll[roll-3]
-            #print(f'Player {is_player} won {wins_for_roll[roll-3]} games! New wins: {scores}')
-            return
-        p2_recurse(not is_player, opponent_score, player_score, opponent_place, player_place)
+roll2wins = {3:1,4:3,5:6,6:7,7:6,8:3,9:1}
+def p2_recurse(player_score: int, opponent_score: int, player_place: int, opponent_place: int) -> tuple:
+    if player_score >=21:
+        return (1,0)
+    if opponent_score >= 21:
+        return (0,1)
+    plr_wins = 0
+    opp_wins = 0
+    
+    for roll,wins in roll2wins.items():
+        new_place = player_new_pos(player_place, 10, roll)
+        new_score = player_score + new_place
+
+        o_wins,p_wins = p2_recurse(opponent_score, new_score, opponent_place, new_place)
+
+        plr_wins += p_wins * wins
+        opp_wins += o_wins * wins
+
+    return plr_wins, opp_wins
 
 def p1(p1_start,p2_start,boardsize,dicemax):
     losing, rolls = loop(p1_start,p2_start, boardsize, dicemax)            
     print(f'P1: {losing * rolls}')
-
 def p2(file):
     pass
 
@@ -85,6 +91,6 @@ if __name__ == "__main__":
     if args.p1: p1(2,7,10,100)
     if args.p2: 
         #Example
-        p2_recurse(True, 0,0,4,8)
-        print_winner(scores)
-        scores = [0,0]
+        plr_wins, opp_wins = p2_recurse(0,0,2,7)
+        if plr_wins > opp_wins: print(plr_wins)
+        else: print(opp_wins)
